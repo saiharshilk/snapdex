@@ -17,7 +17,9 @@ fn run_preview(terminal: &mut Terminal<impl Backend>, plans: &[RenamePlan]) -> i
     let mut offset = 0;
 
     loop {
-        terminal.draw(|frame| draw(frame, plans, selected, offset))?;
+        terminal
+            .draw(|frame| draw(frame, plans, selected, offset))
+            .map_err(|error| io::Error::other(error.to_string()))?;
         if !event::poll(Duration::from_millis(200))? {
             continue;
         }

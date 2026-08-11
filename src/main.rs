@@ -58,8 +58,8 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     rename_plans(&plans)?;
     let records = plans
         .iter()
-        .map(|plan| (file_name(&plan.old_path), file_name(&plan.new_path)))
-        .collect::<Result<Vec<_>, _>>()?;
+        .map(|plan| Ok((file_name(&plan.old_path)?, file_name(&plan.new_path)?)))
+        .collect::<Result<Vec<_>, io::Error>>()?;
     history::append_batch(&folder, &records)?;
     println!("Renamed {} image(s).", plans.len());
     Ok(())
