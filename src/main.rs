@@ -46,8 +46,15 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut reserved = HashSet::new();
     let mut plans = Vec::with_capacity(images.len());
     for image in images {
-        let text = ocr::extract_text(&image)?;
-        plans.push(naming::build_plan(&folder, image, &text, &mut reserved)?);
+        let result = ocr::extract(&image)?;
+        plans.push(naming::build_plan(
+            &folder,
+            image,
+            &result.text,
+            result.dimensions,
+            result.low_confidence,
+            &mut reserved,
+        )?);
     }
 
     if !tui::confirm(&plans)? {

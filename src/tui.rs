@@ -73,11 +73,15 @@ fn draw(frame: &mut Frame<'_>, plans: &[RenamePlan], selected: usize, offset: us
             .file_name()
             .unwrap_or_default()
             .to_string_lossy();
-        ListItem::new(format!("{old}  →  {new}")).style(if offset + index == selected {
+        let marker = if plan.fallback { "[fallback] " } else { "" };
+        let style = if offset + index == selected {
             Style::default().fg(Color::Yellow)
+        } else if plan.fallback {
+            Style::default().fg(Color::Magenta)
         } else {
             Style::default()
-        })
+        };
+        ListItem::new(format!("{marker}{old}  →  {new}")).style(style)
     });
     let list = List::new(visible)
         .block(

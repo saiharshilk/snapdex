@@ -15,6 +15,7 @@ const STOPWORDS: &[&str] = &[
 pub struct RenamePlan {
     pub old_path: PathBuf,
     pub new_path: PathBuf,
+    pub fallback: bool,
 }
 
 pub fn keywords(text: &str) -> Vec<String> {
@@ -44,6 +45,8 @@ pub fn build_plan(
     folder: &Path,
     old_path: PathBuf,
     text: &str,
+    dimensions: (u32, u32),
+    fallback: bool,
     reserved: &mut HashSet<String>,
 ) -> io::Result<RenamePlan> {
     let extension = old_path
@@ -53,18 +56,22 @@ pub fn build_plan(
         .to_string();
     let date = earlier_file_date(&old_path)?;
     let date = DateTime::<Local>::from(date).format("%Y-%m-%d").to_string();
-    let mut words = keywords(text);
-    if words.is_empty() {
-        words.extend(["untitled".to_string(), "image".to_string()]);
-    } else if words.len() == 1 {
-        words.push("image".to_string());
-    }
-    let topic = &words[0];
-    let suffix = words.iter().skip(1).take(2).cloned().collect::<Vec<_>>();
-    let base = if suffix.is_empty() {
-        format!("{date}_{topic}")
+    let base = if fallback {
+        format!("{date}_screenshot-{}x{}", dimensions.0, dimensions.1)
     } else {
-        format!("{date}_{topic}_{}", suffix.join("-"))
+        let mut words = keywords(text);
+        if words.is_empty() {
+            words.extend(["untitled".to_string(), "image".to_string()]);
+        } else if words.len() == 1 {
+            words.push("image".to_string());
+        }
+        let topic = &words[0];
+        let suffix = words.iter().skip(1).take(2).cloned().collect::<Vec<_>>();
+        if suffix.is_empty() {
+            format!("{date}_{topic}")
+        } else {
+            format!("{date}_{topic}_{}", suffix.join("-"))
+        }
     };
 
     let original_name = old_path
@@ -94,6 +101,7 @@ pub fn build_plan(
         return Ok(RenamePlan {
             old_path,
             new_path: candidate,
+            fallback,
         });
     }
 }
